@@ -22,11 +22,39 @@ function mostrarMensaje(texto) {
   cont.innerHTML = `<li>${texto}</li>`;
 }
 
+function setSortButtonToSortMode() {
+  btnSortear.textContent = 'Sortear amigo';
+  btnSortear.removeAttribute('data-mode'); // modo normal (sorteo)
+  updateSortButtonState();
+}
+
+function setSortButtonToResetMode() {
+  btnSortear.textContent = 'Nuevo sorteo';
+  btnSortear.setAttribute('data-mode', 'reset');
+  // En modo reset el botón siempre debe estar habilitado
+  btnSortear.disabled = false;
+  btnSortear.setAttribute('aria-disabled', 'false');
+  btnSortear.title = 'Iniciar un nuevo sorteo (limpia la lista y resultados)';
+}
+
+/**
+ * Habilita/deshabilita el botón "Sortear amigo".
+ * - En modo reset, nunca se deshabilita (para permitir limpiar).
+ * - En modo sorteo, requiere al menos 2 participantes.
+ */
 function updateSortButtonState() {
   if (!btnSortear) return;
+
+  const enReset = btnSortear.dataset.mode === 'reset';
+  if (enReset) {
+    btnSortear.disabled = false;
+    btnSortear.setAttribute('aria-disabled', 'false');
+    btnSortear.title = 'Iniciar un nuevo sorteo (limpia la lista y resultados)';
+    return;
+  }
+
   const habilitado = amigos.length >= 2;
   btnSortear.disabled = !habilitado;
-  // accesibilidad extra (screen readers)
   btnSortear.setAttribute('aria-disabled', String(!habilitado));
   btnSortear.title = habilitado
     ? 'Sortear amigo'
@@ -51,6 +79,12 @@ function agregarAmigo() {
     return;
   }
 
+  // Si estábamos en modo reset (después de un sorteo), volver a modo sorteo
+  if (btnSortear.dataset.mode === 'reset') {
+    $('#resultado').innerHTML = '';
+    setSortButtonToSortMode();
+  }
+
   amigos.push(nombre);
   renderLista();
   updateSortButtonState();
@@ -60,31 +94,38 @@ function agregarAmigo() {
 }
 
 /**
+ * Limpiar todo para un nuevo sorteo
+ */
+function nuevoSorteo() {
+  amigos.length = 0;            // vacía la lista
+  renderLista();
+  $('#resultado').innerHTML = '';
+  setSortButtonToSortMode();    // vuelve a "Sortear amigo" y valida el estado
+  inputNombre.focus();
+}
+
+/**
  * Sorteo general (N >= 2):
  * 1) Baraja con Fisher–Yates.
  * 2) Asigna en ciclo: s[i] -> s[(i+1) % N]
- *    — sin auto-asignaciones; todos dan y todos reciben.
  */
-function sortearAmigo() {
+function ejecutarSorteo() {
   if (amigos.length < 2) {
-    mostrarMensaje('Debes ingresar al menos 2 participantes.');
+    mostrarMensaje('Agrega al menos 2 participantes.');
     return;
   }
 
-  // barajar
   const s = [...amigos];
   for (let i = s.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [s[i], s[j]] = [s[j], s[i]];
   }
 
-  // asignaciones
   const asignaciones = s.map((regala, i) => ({
     regala,
     recibe: s[(i + 1) % s.length],
   }));
 
-  // render tabla dos columnas
   const filas = asignaciones
     .map(a => `<tr><td>${a.regala}</td><td>→</td><td>${a.recibe}</td></tr>`)
     .join('');
@@ -102,6 +143,18 @@ function sortearAmigo() {
       </table>
     </li>
   `;
+
+  // Al terminar el sorteo, pasamos el botón a "Nuevo sorteo"
+  setSortButtonToResetMode();
+}
+
+function sortearAmigo() {
+  // Si está en modo "reset", limpia todo
+  if (btnSortear.dataset.mode === 'reset') {
+    nuevoSorteo();
+  } else {
+    ejecutarSorteo();
+  }
 }
 
 // Accesibilidad: Enter agrega rápido
