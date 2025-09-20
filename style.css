@@ -8,7 +8,7 @@
     --color-white: #FFFFFF;
 }
 
-/* Estilos generales */
+/* Reset básico */
 * {
     margin: 0;
     padding: 0;
@@ -90,21 +90,10 @@ body {
 .button-container {
     width: 300px;
     justify-content: center;
+    margin-top: 15px;
 }
 
-/* Estilos de entrada de texto (no usada directamente, pero mantenida por si acaso) */
-.input-title {
-    flex: 1;
-    padding: 10px 15px;
-    font-size: 16px;
-    border: 2px solid #333;
-    border-right: none;
-    border-radius: 25px 0 0 25px;
-    font-family: "Merriweather", serif;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-/* Estilos base para todos los botones */
+/* Botones */
 button {
     padding: 15px 30px;
     font-family: "Inter", sans-serif;
@@ -115,14 +104,42 @@ button {
     cursor: pointer;
 }
 
-/* Botón Añadir: activo en naranja */
 .button-add {
-    background-color: var(--color-button);
-    color: var(--color-white);
+    background-color: var(--color-tertiary);
+    color: var(--color-text);
     border-radius: 0 25px 25px 0;
 }
+
 .button-add:hover {
+    background-color: #a1a1a1;
+}
+
+.button-draw {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 40px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-white);
+    background-color: var(--color-button);
+    transition: background-color 0.3s;
+}
+
+.button-draw img {
+    margin-right: 12px;
+    width: 24px;
+    height: 24px;
+}
+
+.button-draw:hover {
     background-color: var(--color-button-hover);
+}
+
+.button-draw:disabled {
+    background-color: var(--color-tertiary);
+    cursor: not-allowed;
 }
 
 /* Listas */
@@ -142,28 +159,40 @@ ul {
     text-align: center;
 }
 
-/* Botón sortear: naranja cuando está habilitado, gris cuando está deshabilitado */
-.button-draw {
-    display: flex;
+/* Tabla de parejas (Regala / Recibe) */
+.pairs {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; /* Columna izquierda, flecha, columna derecha */
+    column-gap: 16px;
+    row-gap: 8px;
+    justify-content: center;
     align-items: center;
-    width: 100%;
-    padding: 10px 40px;
-    color: var(--color-white);
-    background-color: var(--color-button);
-    font-size: 16px;
-}
-.button-draw img {
-    margin-right: 40px;
-}
-.button-draw:hover {
-    background-color: var(--color-button-hover);
+    margin: 12px auto 0;
+    font-family: "Inter", sans-serif;
+    font-size: 20px;
 }
 
-/* Estado deshabilitado (visual y accesible) */
-.button-draw[disabled],
-.button-draw[aria-disabled="true"] {
-    background-color: #bdbdbd !important;
-    border-color: #999;
-    cursor: not-allowed;
-    box-shadow: none;
+/* Flatten: encabezados y filas comparten el mismo grid */
+.pairs .head,
+.pairs .row {
+    display: contents;
+}
+
+/* Encabezados */
+.pairs .head > span {
+    font-weight: 800;
+    color: #24a122;
+    text-decoration: underline;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Celdas */
+.pairs span {
+    white-space: nowrap;
+}
+
+/* Flecha centrada */
+.pairs span:nth-child(2) {
+    text-align: center;
 }

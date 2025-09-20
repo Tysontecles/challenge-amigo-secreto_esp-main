@@ -1,172 +1,139 @@
-// ===== Estado =====
-const amigos = [];
+// --------------------
+// Estado y referencias
+// --------------------
+let amigos = [];                   // participantes
+let resultado = [];                // parejas del sorteo
 
-// ===== Shortcuts DOM =====
-const $ = (s) => document.querySelector(s);
-const inputNombre = $('#amigo');
-const btnSortear = $('.button-draw');
+const $ = (sel) => document.querySelector(sel);
 
-// ===== UI helpers =====
-function renderLista() {
-  const ul = $('#listaAmigos');
-  ul.innerHTML = '';
-  amigos.forEach((n, i) => {
-    const li = document.createElement('li');
-    li.textContent = `${i + 1}. ${n}`;
-    ul.appendChild(li);
-  });
+const input = $('#amigo');
+const lista = $('#listaAmigos');
+const resultadoBox = $('#resultado');
+
+const btnAdd = document.querySelector('.button-add');
+const btnSortear = document.getElementById('btnSortear');
+const btnLabel = btnSortear.querySelector('.btn-label');
+
+// --------------------
+// Utilidades de botón
+// --------------------
+function setSortButtonText(texto) {
+  btnLabel.textContent = texto;           // el <img> se mantiene, no desaparece
 }
 
-function mostrarMensaje(texto) {
-  const cont = $('#resultado');
-  cont.innerHTML = `<li>${texto}</li>`;
+function setSortButtonState({ enabled, modo = 'sortear' }) {
+  btnSortear.disabled = !enabled;         // gris si está deshabilitado
+  btnSortear.dataset.mode = modo;         // 'sortear' | 'nuevo'
+  setSortButtonText(modo === 'sortear' ? 'Sortear amigo' : 'Nuevo sorteo');
 }
 
-function setSortButtonToSortMode() {
-  btnSortear.textContent = 'Sortear amigo';
-  btnSortear.removeAttribute('data-mode'); // modo normal (sorteo)
-  updateSortButtonState();
+// --------------------
+// Render de listas
+// --------------------
+function renderListaAmigos() {
+  if (!amigos.length) {
+    lista.innerHTML = '';
+    return;
+  }
+  lista.innerHTML = amigos
+    .map((n, i) => `<li class="name-item">${i + 1}. ${n}</li>`)
+    .join('');
 }
 
-function setSortButtonToResetMode() {
-  btnSortear.textContent = 'Nuevo sorteo';
-  btnSortear.setAttribute('data-mode', 'reset');
-  // En modo reset el botón siempre debe estar habilitado
-  btnSortear.disabled = false;
-  btnSortear.setAttribute('aria-disabled', 'false');
-  btnSortear.title = 'Iniciar un nuevo sorteo (limpia la lista y resultados)';
-}
-
-/**
- * Habilita/deshabilita el botón "Sortear amigo".
- * - En modo reset, nunca se deshabilita (para permitir limpiar).
- * - En modo sorteo, requiere al menos 2 participantes.
- */
-function updateSortButtonState() {
-  if (!btnSortear) return;
-
-  const enReset = btnSortear.dataset.mode === 'reset';
-  if (enReset) {
-    btnSortear.disabled = false;
-    btnSortear.setAttribute('aria-disabled', 'false');
-    btnSortear.title = 'Iniciar un nuevo sorteo (limpia la lista y resultados)';
+function renderParejas(pairs) {
+  if (!pairs.length) {
+    resultadoBox.innerHTML = '';
     return;
   }
 
-  const habilitado = amigos.length >= 2;
-  btnSortear.disabled = !habilitado;
-  btnSortear.setAttribute('aria-disabled', String(!habilitado));
-  btnSortear.title = habilitado
-    ? 'Sortear amigo'
-    : 'Agrega al menos 2 participantes';
+  const head = `
+    <div class="head">
+      <span>Regala</span><span></span><span>Recibe</span>
+    </div>
+  `;
+
+  const rows = pairs
+    .map(p => `
+      <div class="row">
+        <span>${p.giver}</span>
+        <span>➜</span>
+        <span>${p.receiver}</span>
+      </div>
+    `)
+    .join('');
+
+  resultadoBox.innerHTML = `<div class="pairs">${head}${rows}</div>`;
 }
 
-function normalizarNombre(txt) {
-  return txt.trim();
+// Mensaje corto (debajo del input)
+function feedback(msg) {
+  resultadoBox.innerHTML = `<div class="feedback">${msg}</div>`;
 }
 
-// ===== Acciones =====
+// --------------------
+// Lógica principal
+// --------------------
+const normaliza = (s) => s.trim().toLowerCase();
+
 function agregarAmigo() {
-  const nombre = normalizarNombre(inputNombre.value);
+  const nombre = input.value.trim();
+  if (!nombre) return;
 
-  if (!nombre) {
-    mostrarMensaje('Ingresa un nombre válido.');
-    return;
-  }
-  const existe = amigos.some((n) => n.toLowerCase() === nombre.toLowerCase());
+  const existe = amigos.some(n => normaliza(n) === normaliza(nombre));
   if (existe) {
-    mostrarMensaje('Ese nombre ya está en la lista.');
+    feedback('Ese nombre ya está en la lista.');
+    input.value = '';
+    input.focus();
     return;
-  }
-
-  // Si estábamos en modo reset (después de un sorteo), volver a modo sorteo
-  if (btnSortear.dataset.mode === 'reset') {
-    $('#resultado').innerHTML = '';
-    setSortButtonToSortMode();
   }
 
   amigos.push(nombre);
-  renderLista();
-  updateSortButtonState();
-  mostrarMensaje('Participante agregado.');
-  inputNombre.value = '';
-  inputNombre.focus();
+  renderListaAmigos();
+  feedback('Participante agregado.');
+  input.value = '';
+  input.focus();
+
+  // habilita sorteo si hay 2+
+  setSortButtonState({ enabled: amigos.length >= 2, modo: 'sortear' });
 }
 
-/**
- * Limpiar todo para un nuevo sorteo
- */
-function nuevoSorteo() {
-  amigos.length = 0;            // vacía la lista
-  renderLista();
-  $('#resultado').innerHTML = '';
-  setSortButtonToSortMode();    // vuelve a "Sortear amigo" y valida el estado
-  inputNombre.focus();
-}
-
-/**
- * Sorteo general (N >= 2):
- * 1) Baraja con Fisher–Yates.
- * 2) Asigna en ciclo: s[i] -> s[(i+1) % N]
- */
-function ejecutarSorteo() {
-  if (amigos.length < 2) {
-    mostrarMensaje('Agrega al menos 2 participantes.');
-    return;
-  }
-
-  const s = [...amigos];
-  for (let i = s.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [s[i], s[j]] = [s[j], s[i]];
-  }
-
-  const asignaciones = s.map((regala, i) => ({
-    regala,
-    recibe: s[(i + 1) % s.length],
-  }));
-
-  const filas = asignaciones
-    .map(a => `<tr><td>${a.regala}</td><td>→</td><td>${a.recibe}</td></tr>`)
-    .join('');
-  $('#resultado').innerHTML = `
-    <li style="list-style:none; width:100%">
-      <table style="margin:auto; border-collapse:collapse; font-family:Inter, sans-serif;">
-        <thead>
-          <tr>
-            <th style="padding:8px 16px; border-bottom:2px solid #ccc; text-align:left;">Regala</th>
-            <th style="padding:8px 16px; border-bottom:2px solid #ccc;"></th>
-            <th style="padding:8px 16px; border-bottom:2px solid #ccc; text-align:left;">Recibe</th>
-          </tr>
-        </thead>
-        <tbody>${filas}</tbody>
-      </table>
-    </li>
-  `;
-
-  // Al terminar el sorteo, pasamos el botón a "Nuevo sorteo"
-  setSortButtonToResetMode();
+function generarParejas(listaNombres) {
+  // corrida circular: a->b, b->c, ..., último->primero
+  if (listaNombres.length < 2) return [];
+  const receptores = listaNombres.slice(1).concat(listaNombres[0]);
+  return listaNombres.map((giver, i) => ({ giver, receiver: receptores[i] }));
 }
 
 function sortearAmigo() {
-  // Si está en modo "reset", limpia todo
-  if (btnSortear.dataset.mode === 'reset') {
-    nuevoSorteo();
-  } else {
-    ejecutarSorteo();
+  const modo = btnSortear.dataset.mode || 'sortear';
+
+  if (modo === 'nuevo') {
+    // ✅ v6: “Nuevo sorteo” limpia TODO (nombres + resultado) y deshabilita el botón
+    amigos = [];
+    resultado = [];
+    renderListaAmigos();
+    renderParejas(resultado);
+    setSortButtonState({ enabled: false, modo: 'sortear' });
+    feedback('Lista reiniciada. Agrega participantes para un nuevo sorteo.');
+    return;
   }
+
+  // modo "sortear"
+  if (amigos.length < 2) {
+    feedback('Debes agregar al menos 2 participantes.');
+    return;
+  }
+
+  resultado = generarParejas(amigos);
+  renderParejas(resultado);
+  setSortButtonState({ enabled: true, modo: 'nuevo' });  // cambia a “Nuevo sorteo”
 }
 
-// Accesibilidad: Enter agrega rápido
-if (inputNombre) {
-  inputNombre.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') agregarAmigo();
-  });
-}
+// --------------------
+// Eventos
+// --------------------
+btnAdd.addEventListener('click', agregarAmigo);
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter') agregarAmigo(); });
 
-// Estado inicial del botón
-updateSortButtonState();
-
-// Exponer al HTML
-window.agregarAmigo = agregarAmigo;
-window.sortearAmigo = sortearAmigo;
+// estado inicial del botón de sorteo
+setSortButtonState({ enabled: false, modo: 'sortear' });
