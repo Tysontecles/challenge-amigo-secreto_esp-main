@@ -1,68 +1,91 @@
-- **JS (app.js)** — funciones clave:
-- `agregarAmigo()`: valida y agrega nombres.
-- `renderLista()`: sincroniza `<ul id="listaAmigos">`.
-- `puedeSortear()`: reglas para habilitar el sorteo.
-- `generarAsignaciones()`: crea parejas **Regala→Recibe** evitando auto-asignación (ajuste sobre mezcla aleatoria).
-- `sortearAmigo()`: orquesta el sorteo y renderiza la tabla.
-- `renderResultado(parejas)`: muestra resultados en `<ul id="resultado">`.
-- `actualizarEstadoBoton()`: gestiona habilitado/estilos/texto del botón.
-- `reiniciarSorteo()`: limpia resultados y restaura estados.
+# 🎁 Challenge Amigo Secreto
+
+Este proyecto forma parte del programa **One Oracle Next Education (ONE)** y tiene como objetivo practicar lógica de programación utilizando **JavaScript**.  
+La interfaz y estilos ya estaban predefinidos (HTML y CSS), por lo que el foco estuvo en el desarrollo de la lógica del juego en `app.js`.
 
 ---
 
-## 🛠️ Cómo ejecutar localmente
-1. **Clonar** el repositorio o descargar ZIP.  
-2. Abrir `index.html` en tu navegador (no requiere servidor).
-3. Escribir un nombre y pulsar **Añadir**.
-4. Cuando el botón **Sortear amigo** esté activo, presionarlo para ver la tabla **Regala / Recibe**.
-5. Para reiniciar, usar **Nuevo sorteo**.
+## 🚀 Funcionalidades principales
+- Agregar participantes a una lista dinámica.
+- Validación de entradas (no permite nombres vacíos ni duplicados).
+- Visualización en pantalla de la lista de amigos agregados.
+- Sorteo automático de "Amigo Secreto", generando una tabla de asignaciones:
+  - Cada persona regala a otra distinta de sí misma.
+  - Todos dan y todos reciben un regalo.
+- Botones dinámicos:
+  - **Sortear amigo** se habilita solo cuando hay al menos 2 participantes.
+  - Tras un sorteo exitoso cambia a **Nuevo sorteo**, limpia resultados y permite volver a jugar.
 
 ---
 
-## ♿ Accesibilidad & UX
-- `aria-live="polite"` en resultados para lectores de pantalla.
-- Estados **habilitado/deshabilitado** visibles (color y cursor).
-- Tipografía y peso mayor en la acción principal (CTA).
-- Ícono persistente y alineación estable del botón para evitar “saltos” de layout.
+## 🎨 Mejoras de UI/UX
+- Botones con estados visuales claros:  
+  - Activos en **naranja**.  
+  - Deshabilitados en **gris**.  
+- Tipografía y tamaños jerarquizados: el botón de sorteo es más grande y en negrita para destacar la acción principal.
+- Listas organizadas en dos columnas: **Regala** y **Recibe**, simulando un cuadro de asignaciones.
+- Mensajes claros de error o validación para mejorar la experiencia de usuario.
 
 ---
 
-## ✅ Pruebas manuales sugeridas
-- Intentar agregar vacío/espacios → **rechazado**.
-- Intentar duplicados → **rechazado**.
-- Agregar 2, 3 y 4+ participantes → sorteo **válido** (nadie se asigna a sí mismo).
-- Tras sortear, botón cambia a **Nuevo sorteo** → limpiar y re-habilitar flujo.
-- Verificar tabla **Regala/Recibe** con asignaciones correctas.
+## 📸 Capturas de pantalla
+![Estado inicial (botón deshabilitado)](assets/captura-inicial.png)
+![Lista con participantes](assets/captura-lista.png)
+![Resultado del sorteo (tabla)](assets/captura-resultado.png)
 
 ---
 
-## 🔭 Roadmap
-- Eliminar participante individual desde la lista.
-- Exportar resultado a PDF/CSV.
-- Persistencia en `localStorage`.
-- Modo “anónimo” (ocultar asignaciones, mostrar una por participante bajo demanda).
+## 🛠️ Tecnologías utilizadas
+- **HTML5**: estructura base.  
+- **CSS3**: estilos y diseño responsivo.  
+- **JavaScript (ES6)**: lógica del juego (arrays, funciones, condicionales, DOM).  
+- **Git & GitHub**: control de versiones y portafolio profesional.
 
 ---
 
-## 🧾 Changelog
-- **v0**: HTML/CSS base del challenge.
-- **v1**: Esqueleto JS y enlace DOM (inputs, botones, listas).
-- **v2**: Validaciones (vacío, espacios, duplicados) y habilitado del botón según reglas.
-- **v3**: Sorteo completo para N participantes (pares/impares) con algoritmo sin auto-asignación y **tabla Regala/Recibe**.
-- **v4**: UX/UI — deshabilitado visible, CTA naranja, texto cambia a **“Nuevo sorteo”**, limpieza visual post-sorteo.
-- **v5**: Ajustes visuales — centrado perfecto del texto del botón, tipografía/weight del CTA, icono persistente, espaciados de listas y correcciones menores.
+## 📂 Estructura del proyecto
+```
+challenge-amigo-secreto_esp-main/
+│── assets/              # Imágenes y recursos
+│── index.html           # Página principal
+│── style.css            # Estilos del proyecto
+│── app.js               # Lógica en JavaScript
+│── README.md            # Documentación del proyecto
+```
 
 ---
 
-## 🤝 Contribución
-Sugerencias y PRs son bienvenidos:
-1. Crea una rama: `git checkout -b feature/mi-mejora`
-2. Commit: `git commit -m "feat: mi mejora"`
-3. Push: `git push origin feature/mi-mejora`
-4. Abre un Pull Request
+## 📈 Changelog
+
+### v1.0.0
+- Creación del repositorio con archivos base (HTML + CSS).
+
+### v2.0.0
+- Se agregó la lógica inicial en `app.js`:
+  - Añadir amigos a la lista.
+  - Evitar nombres vacíos.
+
+### v3.0.0
+- Implementación del sorteo automático mostrando resultados en dos columnas.
+
+### v4.0.0
+- Mejora de UI/UX:
+  - Botones dinámicos con estados (habilitado/deshabilitado).
+  - Cambio de texto dinámico en botón de sorteo.
+
+### v5.0.0
+- Correcciones visuales y de usabilidad:
+  - Alineación y tipografía de botones.  
+  - Mantenimiento del ícono en el botón de sorteo.  
+  - Limpieza automática de listas al iniciar un nuevo sorteo.
 
 ---
 
-## 👤 Autor
-**Patricio Moreno** — *Programa Oracle Next Education*  
-Portafolio GitHub: [@tysontecles](https://github.com/tysontecles)
+## 👨‍💻 Autor
+**Patricio Moreno Brevis**  
+[GitHub @tysontecles](https://github.com/tysontecles)
+
+---
+
+## 📜 Licencia
+Este proyecto es de uso educativo y forma parte del programa **Oracle ONE - Alura Latam**.
