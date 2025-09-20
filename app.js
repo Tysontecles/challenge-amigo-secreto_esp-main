@@ -1,43 +1,98 @@
 // ===========================
 // Challenge: Amigo Secreto 🎁
-// Archivo: app.js
+// Versión funcional v1
 // ===========================
 
-// Lista para almacenar los nombres de los amigos
+// Estado de la app
 let amigos = [];
 
-/**
- * Función para añadir un nuevo amigo a la lista
- * - Captura el valor del input
- * - Valida que no esté vacío
- * - Agrega al array 'amigos'
- * - Muestra la lista actualizada en pantalla
- */
-function agregarAmigo() {
-    // TODO: implementar lógica
+// ---- Utilidades ----
+function obtenerInput() {
+  return document.getElementById('amigo');
 }
 
-/**
- * Función para sortear un amigo secreto
- * - Selecciona aleatoriamente un nombre de la lista
- * - Muestra el resultado en el elemento con id "resultado"
- */
-function sortearAmigo() {
-    // TODO: implementar lógica
-}
-
-/**
- * Función auxiliar para mostrar la lista de amigos en el HTML
- * - Recorre el array 'amigos'
- * - Inserta cada nombre como <li> dentro del ul con id "listaAmigos"
- */
-function mostrarLista() {
-    // TODO: implementar lógica
-}
-
-/**
- * Función auxiliar para limpiar el campo de texto
- */
 function limpiarInput() {
-    // TODO: implementar lógica
+  const input = obtenerInput();
+  if (input) input.value = '';
+  input?.focus();
 }
+
+function renderListaAmigos() {
+  const ul = document.getElementById('listaAmigos');
+  if (!ul) return;
+
+  // Limpia la lista y vuelve a dibujar
+  ul.innerHTML = '';
+  amigos.forEach((nombre) => {
+    const li = document.createElement('li');
+    li.textContent = nombre;
+    ul.appendChild(li);
+  });
+}
+
+function renderResultado(texto) {
+  const ul = document.getElementById('resultado');
+  if (!ul) return;
+  ul.innerHTML = ''; // muestra un solo resultado a la vez
+
+  const li = document.createElement('li');
+  li.textContent = texto;
+  ul.appendChild(li);
+}
+
+// ---- Lógica principal ----
+function agregarAmigo() {
+  const input = obtenerInput();
+  if (!input) return;
+
+  const nombre = input.value.trim();
+
+  // Validaciones básicas
+  if (nombre === '') {
+    renderResultado('⚠️ Ingresa un nombre válido.');
+    return;
+  }
+  // Evitar duplicados (case-insensitive)
+  const existe = amigos.some((n) => n.toLowerCase() === nombre.toLowerCase());
+  if (existe) {
+    renderResultado('⚠️ Ese nombre ya está en la lista.');
+    limpiarInput();
+    return;
+  }
+
+  amigos.push(nombre);
+  renderListaAmigos();
+  renderResultado('✅ Nombre agregado.');
+  limpiarInput();
+}
+
+function sortearAmigo() {
+  if (amigos.length === 0) {
+    renderResultado('⚠️ Primero agrega al menos un nombre.');
+    return;
+  }
+
+  // Índice aleatorio y selección
+  const indice = Math.floor(Math.random() * amigos.length);
+  const elegido = amigos[indice];
+
+  // (Opcional) remover el elegido para no repetirlo en futuros sorteos
+  // Si prefieres que NO se elimine, comenta las dos líneas siguientes.
+  amigos.splice(indice, 1);
+  renderListaAmigos();
+
+  renderResultado(`🎉 El amigo secreto es: ${elegido}`);
+}
+
+// ---- Mejora UX: Enter para agregar ----
+// Permite presionar Enter en el input para agregar el nombre
+document.addEventListener('DOMContentLoaded', () => {
+  const input = obtenerInput();
+  if (input) {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        agregarAmigo();
+      }
+    });
+  }
+});
