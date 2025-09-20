@@ -1,98 +1,119 @@
-// Estado
+// ===== Estado =====
 const amigos = [];
 
-// Utilidades de UI
-const $ = (sel) => document.querySelector(sel);
+// ===== Shortcuts DOM =====
+const $ = (s) => document.querySelector(s);
+const inputNombre = $('#amigo');
+const btnSortear = $('.button-draw');
 
+// ===== UI helpers =====
 function renderLista() {
   const ul = $('#listaAmigos');
   ul.innerHTML = '';
-  amigos.forEach((nombre, i) => {
+  amigos.forEach((n, i) => {
     const li = document.createElement('li');
-    li.textContent = `${i + 1}. ${nombre}`;
+    li.textContent = `${i + 1}. ${n}`;
     ul.appendChild(li);
   });
 }
 
-function mostrarResultado(mensajeLineas) {
-  const ul = $('#resultado');
-  ul.innerHTML = '';
-  const lineas = Array.isArray(mensajeLineas) ? mensajeLineas : [mensajeLineas];
-  lineas.forEach((txt) => {
-    const li = document.createElement('li');
-    li.textContent = txt;
-    ul.appendChild(li);
-  });
+function mostrarMensaje(texto) {
+  const cont = $('#resultado');
+  cont.innerHTML = `<li>${texto}</li>`;
 }
 
-// Reglas de negocio
+function updateSortButtonState() {
+  if (!btnSortear) return;
+  const habilitado = amigos.length >= 2;
+  btnSortear.disabled = !habilitado;
+  // accesibilidad extra (screen readers)
+  btnSortear.setAttribute('aria-disabled', String(!habilitado));
+  btnSortear.title = habilitado
+    ? 'Sortear amigo'
+    : 'Agrega al menos 2 participantes';
+}
+
 function normalizarNombre(txt) {
   return txt.trim();
 }
 
+// ===== Acciones =====
 function agregarAmigo() {
-  const input = $('#amigo');
-  const nombre = normalizarNombre(input.value);
+  const nombre = normalizarNombre(inputNombre.value);
 
-  // Validaciones básicas
   if (!nombre) {
-    mostrarResultado('Ingresa un nombre válido.');
+    mostrarMensaje('Ingresa un nombre válido.');
     return;
   }
   const existe = amigos.some((n) => n.toLowerCase() === nombre.toLowerCase());
   if (existe) {
-    mostrarResultado('Ese nombre ya está en la lista.');
+    mostrarMensaje('Ese nombre ya está en la lista.');
     return;
   }
 
   amigos.push(nombre);
   renderLista();
-  mostrarResultado('Participante agregado.');
-  input.value = '';
-  input.focus();
+  updateSortButtonState();
+  mostrarMensaje('Participante agregado.');
+  inputNombre.value = '';
+  inputNombre.focus();
 }
 
 /**
- * Sorteo por parejas sin repetición
- * – Solo se ejecuta si la cantidad es par (>= 2)
- * – Empareja aleatoriamente en pares A ↔ B
+ * Sorteo general (N >= 2):
+ * 1) Baraja con Fisher–Yates.
+ * 2) Asigna en ciclo: s[i] -> s[(i+1) % N]
+ *    — sin auto-asignaciones; todos dan y todos reciben.
  */
 function sortearAmigo() {
-  if (amigos.length < 2 || amigos.length % 2 !== 0) {
-    mostrarResultado('Debes ingresar un número par de participantes');
+  if (amigos.length < 2) {
+    mostrarMensaje('Debes ingresar al menos 2 participantes.');
     return;
   }
 
-  // 1) Copia y desordena la lista (Fisher–Yates)
-  const baraja = [...amigos];
-  for (let i = baraja.length - 1; i > 0; i--) {
+  // barajar
+  const s = [...amigos];
+  for (let i = s.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
+    [s[i], s[j]] = [s[j], s[i]];
   }
 
-  // 2) Arma parejas consecutivas
-  const parejas = [];
-  for (let i = 0; i < baraja.length; i += 2) {
-    const a = baraja[i];
-    const b = baraja[i + 1];
-    parejas.push(`${a} 🎁 ${b}`);
-  }
+  // asignaciones
+  const asignaciones = s.map((regala, i) => ({
+    regala,
+    recibe: s[(i + 1) % s.length],
+  }));
 
-  // 3) Muestra resultado
-  mostrarResultado([
-    'Resultado del sorteo (parejas):',
-    ...parejas
-  ]);
+  // render tabla dos columnas
+  const filas = asignaciones
+    .map(a => `<tr><td>${a.regala}</td><td>→</td><td>${a.recibe}</td></tr>`)
+    .join('');
+  $('#resultado').innerHTML = `
+    <li style="list-style:none; width:100%">
+      <table style="margin:auto; border-collapse:collapse; font-family:Inter, sans-serif;">
+        <thead>
+          <tr>
+            <th style="padding:8px 16px; border-bottom:2px solid #ccc; text-align:left;">Regala</th>
+            <th style="padding:8px 16px; border-bottom:2px solid #ccc;"></th>
+            <th style="padding:8px 16px; border-bottom:2px solid #ccc; text-align:left;">Recibe</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </li>
+  `;
 }
 
-// Accesibilidad: Enter en el input = clic en “Añadir”
-const input = $('#amigo');
-if (input) {
-  input.addEventListener('keydown', (e) => {
+// Accesibilidad: Enter agrega rápido
+if (inputNombre) {
+  inputNombre.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') agregarAmigo();
   });
 }
 
-// Exponer funciones al HTML
+// Estado inicial del botón
+updateSortButtonState();
+
+// Exponer al HTML
 window.agregarAmigo = agregarAmigo;
 window.sortearAmigo = sortearAmigo;
