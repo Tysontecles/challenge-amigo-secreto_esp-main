@@ -1,98 +1,98 @@
-// ===========================
-// Challenge: Amigo Secreto 🎁
-// Versión funcional v1
-// ===========================
+// Estado
+const amigos = [];
 
-// Estado de la app
-let amigos = [];
+// Utilidades de UI
+const $ = (sel) => document.querySelector(sel);
 
-// ---- Utilidades ----
-function obtenerInput() {
-  return document.getElementById('amigo');
-}
-
-function limpiarInput() {
-  const input = obtenerInput();
-  if (input) input.value = '';
-  input?.focus();
-}
-
-function renderListaAmigos() {
-  const ul = document.getElementById('listaAmigos');
-  if (!ul) return;
-
-  // Limpia la lista y vuelve a dibujar
+function renderLista() {
+  const ul = $('#listaAmigos');
   ul.innerHTML = '';
-  amigos.forEach((nombre) => {
+  amigos.forEach((nombre, i) => {
     const li = document.createElement('li');
-    li.textContent = nombre;
+    li.textContent = `${i + 1}. ${nombre}`;
     ul.appendChild(li);
   });
 }
 
-function renderResultado(texto) {
-  const ul = document.getElementById('resultado');
-  if (!ul) return;
-  ul.innerHTML = ''; // muestra un solo resultado a la vez
-
-  const li = document.createElement('li');
-  li.textContent = texto;
-  ul.appendChild(li);
+function mostrarResultado(mensajeLineas) {
+  const ul = $('#resultado');
+  ul.innerHTML = '';
+  const lineas = Array.isArray(mensajeLineas) ? mensajeLineas : [mensajeLineas];
+  lineas.forEach((txt) => {
+    const li = document.createElement('li');
+    li.textContent = txt;
+    ul.appendChild(li);
+  });
 }
 
-// ---- Lógica principal ----
-function agregarAmigo() {
-  const input = obtenerInput();
-  if (!input) return;
+// Reglas de negocio
+function normalizarNombre(txt) {
+  return txt.trim();
+}
 
-  const nombre = input.value.trim();
+function agregarAmigo() {
+  const input = $('#amigo');
+  const nombre = normalizarNombre(input.value);
 
   // Validaciones básicas
-  if (nombre === '') {
-    renderResultado('⚠️ Ingresa un nombre válido.');
+  if (!nombre) {
+    mostrarResultado('Ingresa un nombre válido.');
     return;
   }
-  // Evitar duplicados (case-insensitive)
   const existe = amigos.some((n) => n.toLowerCase() === nombre.toLowerCase());
   if (existe) {
-    renderResultado('⚠️ Ese nombre ya está en la lista.');
-    limpiarInput();
+    mostrarResultado('Ese nombre ya está en la lista.');
     return;
   }
 
   amigos.push(nombre);
-  renderListaAmigos();
-  renderResultado('✅ Nombre agregado.');
-  limpiarInput();
+  renderLista();
+  mostrarResultado('Participante agregado.');
+  input.value = '';
+  input.focus();
 }
 
+/**
+ * Sorteo por parejas sin repetición
+ * – Solo se ejecuta si la cantidad es par (>= 2)
+ * – Empareja aleatoriamente en pares A ↔ B
+ */
 function sortearAmigo() {
-  if (amigos.length === 0) {
-    renderResultado('⚠️ Primero agrega al menos un nombre.');
+  if (amigos.length < 2 || amigos.length % 2 !== 0) {
+    mostrarResultado('Debes ingresar un número par de participantes');
     return;
   }
 
-  // Índice aleatorio y selección
-  const indice = Math.floor(Math.random() * amigos.length);
-  const elegido = amigos[indice];
+  // 1) Copia y desordena la lista (Fisher–Yates)
+  const baraja = [...amigos];
+  for (let i = baraja.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [baraja[i], baraja[j]] = [baraja[j], baraja[i]];
+  }
 
-  // (Opcional) remover el elegido para no repetirlo en futuros sorteos
-  // Si prefieres que NO se elimine, comenta las dos líneas siguientes.
-  amigos.splice(indice, 1);
-  renderListaAmigos();
+  // 2) Arma parejas consecutivas
+  const parejas = [];
+  for (let i = 0; i < baraja.length; i += 2) {
+    const a = baraja[i];
+    const b = baraja[i + 1];
+    parejas.push(`${a} 🎁 ${b}`);
+  }
 
-  renderResultado(`🎉 El amigo secreto es: ${elegido}`);
+  // 3) Muestra resultado
+  mostrarResultado([
+    'Resultado del sorteo (parejas):',
+    ...parejas
+  ]);
 }
 
-// ---- Mejora UX: Enter para agregar ----
-// Permite presionar Enter en el input para agregar el nombre
-document.addEventListener('DOMContentLoaded', () => {
-  const input = obtenerInput();
-  if (input) {
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        agregarAmigo();
-      }
-    });
-  }
-});
+// Accesibilidad: Enter en el input = clic en “Añadir”
+const input = $('#amigo');
+if (input) {
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') agregarAmigo();
+  });
+}
+
+// Exponer funciones al HTML
+window.agregarAmigo = agregarAmigo;
+window.sortearAmigo = sortearAmigo;
